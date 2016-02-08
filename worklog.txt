@@ -1,0 +1,21 @@
+## 2/8
+
+- starting this dumb memory allocator bc i don't know how to write them.
+  though it might be fun to try to write it organically rather than looking up
+  how to do it
+- first one is going to be so dumb. will only support alloc(). no realloc, free
+  etc
+- api
+    - init
+        - mmaps region
+    - alloc
+        - return memory
+    - close
+        - munmap
+- allocator will have state. basically just a pointer to the start of the
+  free section. that pointer will get bumped on every malloc call. how to
+  check if we've exceeded pagesize space?
+    - well i guess we can keep a total allocated state variable and check that
+      on every alloc.
+    - or just in the init, save the address of the last valid address of the
+      mapping and compare that. i'll do this
