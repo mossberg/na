@@ -54,6 +54,7 @@ chunk struct
   then is able to reuse that space if appropriate
 - next steps
     - chunk coalescing
+    - realloc
     - questions
         - security regarding freed blocks. memset the data that was there?
             - otherwise if you mallocd and read that data you would see whatever
@@ -62,3 +63,20 @@ chunk struct
           into that unallocated block. what is the size for that chunk?
           rn it stays at 8. i guess changing it to 5 would introduce a gap in
           the heap. at the moment the heap is entirely adjacent
+            - also this would fuck up finding the macros for getting to the
+              next chunk, since they assume contiguity
+
+## 2/9
+
+- ok i want to impement chunk coalescing, but since my list is only singly
+  linked, effectively, i can only do it forward. that is, when a chunk is freed,
+  it can check if the next chunk is unallocd. if it is, it will change the
+  just free'd chunks size to encompass the next chunk, essentially engulfing
+  the free chunk in the front
+- however, this will not detect if the chunk behind is free. if we are at a
+  given chunk, we have no way of knowing where the previous chunk is because
+  that next/prev links are implicit in the contiguity of the heap, rather than
+  explicit pointers.
+- so in the future i guess i'll have to go to a doubly linked design to have
+  really awesome chunk coalescence. but for now, i'll just go with forward
+  coalescence

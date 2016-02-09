@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <stdio.h>
@@ -78,6 +79,13 @@ void na_free(void *p)
     if (!hdr->allocated)
         na_panic("trying to free unallocated chunk!");
     hdr->allocated = false;
+    struct na_chunk_hdr *next = NEXT_CHUNK(hdr);
+    if (!next->allocated) {
+        hdr->size += sizeof(*next) + next->size;
+        if (next->is_last) {
+            hdr->is_last = true;
+        }
+    }
 }
 
 static void dump_hdr(struct na_chunk_hdr *hdr)
@@ -90,15 +98,19 @@ static void dump_hdr(struct na_chunk_hdr *hdr)
 
 void na_dump(void)
 {
+    size_t heap_size = 0;
     struct na_chunk_hdr *curr = na_start;
     while (curr->is_last == false) {
         dump_hdr(curr);
         if (curr->allocated) {
             hexdump((uint8_t *)curr + sizeof(*curr), curr->size);
         }
+        heap_size += curr->size + sizeof(*curr);
         curr = NEXT_CHUNK(curr);
     }
     dump_hdr(curr);
+    heap_size += curr->size + sizeof(*curr);
+    assert(heap_size == PAGE_SIZE && "all heap sizes don't add up!");
 }
 
 int na_close(void)
