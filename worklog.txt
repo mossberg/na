@@ -43,3 +43,22 @@ chunk struct
 - ultimately the end of this list will be a chunk that's the last chunk and
   represents the end of the heap. so the heap will effectively start out as a
   single unallocated chunk
+
+
+--
+
+- cool, so i have a minimal working memory allocator. it implements an alloc
+  and free function. the alloc function allows n bytes of memory and returns
+  a pointer to it, to be used by the caller. the free function is given
+  a pointer to that data and marks that data as now reusable. the allocator
+  then is able to reuse that space if appropriate
+- next steps
+    - chunk coalescing
+    - questions
+        - security regarding freed blocks. memset the data that was there?
+            - otherwise if you mallocd and read that data you would see whatever
+              was there before, idk
+        - unallocated block of size 8. they call alloc of size 5, which fits
+          into that unallocated block. what is the size for that chunk?
+          rn it stays at 8. i guess changing it to 5 would introduce a gap in
+          the heap. at the moment the heap is entirely adjacent

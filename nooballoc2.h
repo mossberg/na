@@ -12,7 +12,7 @@
 #define PAGE_SIZE 4096
 #define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
 #define CHUNK_HDR(data) ((void *) (uint8_t *)data - sizeof(struct na_chunk_hdr))
-#define NEXT_CHUNK(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
+#define NEXT_CHUNK(chunk) ((void *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
 
 void *na_start;
@@ -22,6 +22,12 @@ struct na_chunk_hdr {
     bool allocated;
     bool is_last;
 } __attribute__((packed));
+
+static void na_panic(const char *msg)
+{
+    fprintf(stderr, "*** nooballoc2: %s ***\n", msg);
+    exit(1);
+}
 
 int na_init(void)
 {
@@ -38,13 +44,12 @@ int na_init(void)
 void *na_alloc(size_t len)
 {
     struct na_chunk_hdr *curr = na_start;
-    while ((curr->allocated || curr->size < len) && curr->is_last == false) {
+    while ((curr->allocated || curr->size < len) && !curr->is_last) {
         curr = NEXT_CHUNK(curr);
     }
     if (curr->is_last) {
         if (curr->size < len) {
-            fprintf(stderr, "*** nooballoc2: no big enough heap chunks ***\n");
-            exit(1);
+            na_panic("no big enough heap chunks");
         }
 
         struct na_chunk_hdr *next = CHUNK_DATA(curr) + len;
@@ -70,6 +75,8 @@ void *na_alloc(size_t len)
 void na_free(void *p)
 {
     struct na_chunk_hdr *hdr = CHUNK_HDR(p);
+    if (!hdr->allocated)
+        na_panic("trying to free unallocated chunk!");
     hdr->allocated = false;
 }
 
