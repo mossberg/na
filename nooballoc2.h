@@ -78,6 +78,25 @@ void *na_alloc(size_t len)
     return (uint8_t *)curr + sizeof(*curr);
 }
 
+static void dump_hdr(struct na_chunk_hdr *hdr)
+{
+    printf("> %p\n", hdr);
+    printf("\tsize: %lu\n", hdr->size);
+    printf("\tallocated: %lu\n", hdr->allocated);
+    printf("\tis_last: %lu\n", hdr->is_last);
+}
+
+void na_dump(void)
+{
+    struct na_chunk_hdr *curr = na_start;
+    while (curr->is_last == false) {
+        dump_hdr(curr);
+        hexdump((uint8_t *)curr + sizeof(*curr), curr->size);
+        curr = (uint8_t *)curr + sizeof(*curr) + curr->size;
+    }
+    dump_hdr(curr);
+}
+
 int na_close(void)
 {
     /* munmap(NA_START(), (size_t )PAGE_SIZE); */
