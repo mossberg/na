@@ -14,32 +14,32 @@ int main(int argc, char **argv)
         perror(NULL);
         return ret;
     }
-    hexdump(na_start, 50);
 
-    printf("%lu\n", sizeof(struct na_chunk_hdr));
-    char *mem = na_alloc(8);
-    printf("%p\n", mem);
-    /* strcpy(mem, "asdfasd"); */
-    memset(mem, 'A', 8);
+    char *a = na_alloc(8);
+    memset(a, 'A', 8);
 
-    /* mem = na_alloc(8); */
-    /* strcpy(mem, "qwerqweoverflow"); */
-    /* hexdump(na_start, 50); */
-    mem = na_alloc(8);
-    /* strcpy(mem, "hiimmak"); */
-    memset(mem, 'B', 8);
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
 
-    mem = na_alloc(16);
-    /* strcpy(mem, "hiimmak"); */
-    memset(mem, 'C', 16);
-
-    /* mem = na_alloc(0x1000); */
-
-    /* /1* printf("%p\n", na_start); *1/ */
+    char *c = na_alloc(16);
+    memset(c, 'C', 16);
 
     na_dump();
-
     hexdump(na_start, 0x50);
+
+    na_free(a);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    char *d = na_alloc(5);
+    memset(d, 'D', 5);
+
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+
 
     na_close();
     return 0;
