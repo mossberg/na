@@ -1,3 +1,7 @@
-all:
-	gcc -o main main.c
+OUT = nooballoc_test nooballoc_test2
+HEADERS = $(wildcard *.h)
 
+all: $(OUT) $(HEADERS)
+
+clean:
+	rm -f $(OUT)

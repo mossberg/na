@@ -19,3 +19,27 @@
       on every alloc.
     - or just in the init, save the address of the last valid address of the
       mapping and compare that. i'll do this
+- ok so i had that basic impl down
+    - now i want to think about how to add a free function
+- what are the semantics of `free`? it's telling the allocator that the
+  memory is now available to be used by something else. my dumb allocator
+  fundamentally can't support this since it's only state is a pointer to
+  the free section of memory
+- this leads me to believe that i'll need this chunk idea. where the heap is
+  composed of discrete chunks of memory.
+- a chunk has a header right before it, and the header tells how large the
+  mem space is.
+- when we initialize the heap, we mmap the region, and then set the header of
+  the beginning of the map to say that this is an unallocated chunk
+
+
+chunk struct
+- we'll need a bit in the header for whether the chunk is allocated or not
+- need a bit for whether this is the end of the list?
+
+
+- then our alloc function will traverse across the heap looking for the first
+  chunk who is unallocated and has a good enough size.
+- ultimately the end of this list will be a chunk that's the last chunk and
+  represents the end of the heap. so the heap will effectively start out as a
+  single unallocated chunk

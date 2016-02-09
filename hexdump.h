@@ -1,3 +1,5 @@
+#pragma once
+
 void print_byte(char c) {
     if (c >= ' ' && c <= '~') {
         printf("%c", c);
@@ -12,7 +14,7 @@ void print_ascii(size_t off, size_t len, const unsigned char *hex) {
     }
 }
 
-void hexpoop(const void *_hex, const size_t sz) {
+void hexdump(const void *_hex, const size_t sz) {
     const unsigned char *hex = (unsigned char *) _hex;
     size_t i = 0;
     for (; i < sz; i++) {

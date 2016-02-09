@@ -19,12 +19,12 @@ int main(int argc, char **argv)
     strcpy(mem, "asdfasd");
     mem = na_alloc(8);
     strcpy(mem, "qwerqweoverflow");
-    hexpoop(na_start, 20);
+    hexdump(na_start, 50);
     mem = na_alloc(8);
     strcpy(mem, "hiimmakr");
 
     printf("%p\n", na_start);
-    hexpoop(na_start, 20);
+    hexdump(na_start, 50);
 
     na_close();
     return 0;
