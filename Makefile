@@ -3,7 +3,7 @@ HEADERS = $(wildcard *.h)
 
 all: $(OUT) $(HEADERS)
 
-nooballoc_test2: nooballoc_test.c nooballoc2.h
+nooballoc_test2: nooballoc_test2.c nooballoc2.h
 	gcc -o $@ nooballoc_test2.c
 
 clean:

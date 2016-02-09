@@ -10,13 +10,11 @@
 #include "hexdump.h"
 
 #define PAGE_SIZE 4096
-#define NA_START() ((void *)(na_free & ~(PAGE_SIZE - 1)))
-#define NEXT_CHUNK(chunk) ((struct na_chunk_hdr *) (((char *)chunk) + sizeof(struct na_chunk_hdr) + chunk->size))
+#define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
+#define NEXT_CHUNK(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
-#define pp(ptr, msg) printf("##msg %p\n", ptr)
 
 void *na_start;
-/* void *na_free; */
 
 struct na_chunk_hdr {
     size_t size;  
@@ -29,7 +27,6 @@ int na_init(void)
     na_start = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
     if (na_start == MAP_FAILED)
         return -1;
-    /* na_free = na_start; */
     struct na_chunk_hdr *first = na_start;
     first->size = PAGE_SIZE - sizeof(*first);
     first->allocated = false;
@@ -43,7 +40,7 @@ void *na_alloc(size_t len)
     puts("yo");
     hexdump(na_start, 0x50);
     while ((curr->allocated || curr->size < len) && curr->is_last == false) {
-        curr = (uint8_t *)curr + sizeof(*curr) + curr->size;
+        curr = NEXT_CHUNK(curr);
     }
         printf("curr %p\n", curr);
     if (curr->is_last) {
@@ -52,8 +49,7 @@ void *na_alloc(size_t len)
             exit(1);
         }
 
-        struct na_chunk_hdr *next = ((uint8_t *) curr) + sizeof(*curr) + len;
-        /* struct na_chunk_hdr *next = NEXT_CHUNK(curr); */
+        struct na_chunk_hdr *next = CHUNK_DATA(curr) + len;
         printf("curr %p\n", curr);
         printf("na start %p\n", na_start);
         printf("next %p\n", next);
@@ -67,23 +63,18 @@ void *na_alloc(size_t len)
         curr->size = len;
 
     }
-    
-
 
     curr->allocated = true;
 
-
-    /* void *ret = na_free; */
-    /* na_free += len; */
-    return (uint8_t *)curr + sizeof(*curr);
+    return CHUNK_DATA(curr);
 }
 
 static void dump_hdr(struct na_chunk_hdr *hdr)
 {
     printf("> %p\n", hdr);
     printf("\tsize: %lu\n", hdr->size);
-    printf("\tallocated: %lu\n", hdr->allocated);
-    printf("\tis_last: %lu\n", hdr->is_last);
+    printf("\tallocated: %d\n", hdr->allocated);
+    printf("\tis_last: %d\n", hdr->is_last);
 }
 
 void na_dump(void)
@@ -91,14 +82,15 @@ void na_dump(void)
     struct na_chunk_hdr *curr = na_start;
     while (curr->is_last == false) {
         dump_hdr(curr);
-        hexdump((uint8_t *)curr + sizeof(*curr), curr->size);
-        curr = (uint8_t *)curr + sizeof(*curr) + curr->size;
+        if (curr->allocated) {
+            hexdump((uint8_t *)curr + sizeof(*curr), curr->size);
+        }
+        curr = NEXT_CHUNK(curr);
     }
     dump_hdr(curr);
 }
 
 int na_close(void)
 {
-    /* munmap(NA_START(), (size_t )PAGE_SIZE); */
     return munmap(na_start, (size_t) 4096);
 }

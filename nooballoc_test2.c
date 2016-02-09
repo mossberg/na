@@ -33,9 +33,12 @@ int main(int argc, char **argv)
     /* strcpy(mem, "hiimmak"); */
     memset(mem, 'C', 16);
 
-    mem = na_alloc(0x1000);
+    /* mem = na_alloc(0x1000); */
 
-    /* printf("%p\n", na_start); */
+    /* /1* printf("%p\n", na_start); *1/ */
+
+    na_dump();
+
     hexdump(na_start, 0x50);
 
     na_close();
