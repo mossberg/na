@@ -192,12 +192,42 @@ int coalesce2(void)
     return 0;
 }
 
+int _realloc(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(8);
+    memset(a, 'A', 8);
+
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
+
+    char *c = na_alloc(16);
+    memset(c, 'C', 16);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_realloc(a, 64);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+}
+
 
 int main(int argc, char **argv)
 {
 
     /* test1(); */
     /* test2(); */
-    coalesce2();
+    /* coalesce2(); */
+    _realloc();
     return 0;
 }

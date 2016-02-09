@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 #include "hexdump.h"
 
 #define PAGE_SIZE 4096
@@ -15,6 +14,7 @@
 #define CHUNK_HDR(data) ((void *) (uint8_t *)data - sizeof(struct na_chunk_hdr))
 #define NEXT_CHUNK(chunk) ((void *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
+void na_dump(void);
 
 void *na_start;
 
@@ -42,7 +42,8 @@ int na_init(void)
     return 0;
 }
 
-void *na_alloc(size_t len)
+
+static struct na_chunk_hdr *get_chunk_of_len(size_t len)
 {
     struct na_chunk_hdr *curr = na_start;
     while ((curr->allocated || curr->size < len) && !curr->is_last) {
@@ -70,7 +71,34 @@ void *na_alloc(size_t len)
 
     curr->allocated = true;
 
-    return CHUNK_DATA(curr);
+    return curr;
+
+}
+
+void *na_alloc(size_t len)
+{
+    return CHUNK_DATA(get_chunk_of_len(len));
+}
+
+void *na_realloc(void *p, size_t len)
+{
+    struct na_chunk_hdr *curr = CHUNK_HDR(p);
+    if (!curr->allocated)
+        na_panic("trying to realloc unallocated chunk!");
+    if (len <= curr->size) {
+        return p;
+    }
+    struct na_chunk_hdr *bigger = get_chunk_of_len(len);
+    memcpy(CHUNK_DATA(bigger), CHUNK_DATA(curr), curr->size);
+    curr->allocated = false;
+
+    /* puts("about to dump"); */
+    /* na_dump(); */
+
+    /* puts("----"); */
+
+
+    return CHUNK_DATA(bigger);
 }
 
 void na_free(void *p)
@@ -88,10 +116,12 @@ void na_free(void *p)
     }
 }
 
+
+
 static void dump_hdr(struct na_chunk_hdr *hdr)
 {
     printf("> %p\n", hdr);
-    printf("\tsize: %lu\n", hdr->size);
+    printf("\tsize: %lu (0x%zx)\n", hdr->size, hdr->size);
     printf("\tallocated: %d\n", hdr->allocated);
     printf("\tis_last: %d\n", hdr->is_last);
 }
@@ -100,6 +130,7 @@ void na_dump(void)
 {
     size_t heap_size = 0;
     struct na_chunk_hdr *curr = na_start;
+    puts(" >>> DUMP BEGIN <<< ");
     while (curr->is_last == false) {
         dump_hdr(curr);
         if (curr->allocated) {
@@ -111,6 +142,8 @@ void na_dump(void)
     dump_hdr(curr);
     heap_size += curr->size + sizeof(*curr);
     assert(heap_size == PAGE_SIZE && "all heap sizes don't add up!");
+
+    puts(" >>> DUMP END <<< ");
 }
 
 int na_close(void)
