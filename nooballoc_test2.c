@@ -172,7 +172,7 @@ int coalesce2(void)
 
     na_free(d);
     na_free(c);
-    na_free(b);
+    na_free(e);
     /* na_free(a); */
     na_dump();
     hexdump(na_start, 0x50);

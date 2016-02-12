@@ -85,6 +85,18 @@ void *na_alloc(size_t len)
     return CHUNK_DATA(get_chunk_of_len(len));
 }
 
+// assumes there is a next chunk
+static void forward_coalesce(struct na_chunk_hdr *hdr)
+{
+    struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
+    if (!next->allocated) {
+        hdr->size += sizeof(*next) + next->size;
+        if (next->is_last) {
+            hdr->is_last = true;
+        }
+    }
+}
+
 void *na_realloc(void *p, size_t len)
 {
     struct na_chunk_hdr *curr = CHUNK_HDR(p);
@@ -93,6 +105,12 @@ void *na_realloc(void *p, size_t len)
     if (len <= curr->size) {
         return p;
     }
+    /* } else if (!NEXT_CHUNK_HDR(curr)->allocated) { */
+    /*     struct na_chunk_hdr *next = NEXT_CHUNK_HDR(curr); */
+    /*     if (len <= curr->size + sizeof(*next) + next->size) { */
+    /*         forward_coalesce(curr); */
+    /*     } */
+    /* } */
 
     struct na_chunk_hdr *bigger = get_chunk_of_len(len);
     memcpy(CHUNK_DATA(bigger), CHUNK_DATA(curr), curr->size);
@@ -109,15 +127,8 @@ void na_free(void *p)
     hdr->allocated = false;
 
     // forward coalesce
-    struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
-    if (!next->allocated) {
-        hdr->size += sizeof(*next) + next->size;
-        if (next->is_last) {
-            hdr->is_last = true;
-        }
-    }
+    forward_coalesce(hdr);
 }
-
 
 
 static void dump_hdr(struct na_chunk_hdr *hdr)
