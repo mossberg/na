@@ -104,13 +104,13 @@ void *na_realloc(void *p, size_t len)
         na_panic("trying to realloc unallocated chunk!");
     if (len <= curr->size) {
         return p;
+    } else if (!NEXT_CHUNK_HDR(curr)->allocated) {
+        struct na_chunk_hdr *next = NEXT_CHUNK_HDR(curr);
+        if (len <= curr->size + sizeof(*next) + next->size) {
+            forward_coalesce(curr);
+            return p;
+        }
     }
-    /* } else if (!NEXT_CHUNK_HDR(curr)->allocated) { */
-    /*     struct na_chunk_hdr *next = NEXT_CHUNK_HDR(curr); */
-    /*     if (len <= curr->size + sizeof(*next) + next->size) { */
-    /*         forward_coalesce(curr); */
-    /*     } */
-    /* } */
 
     struct na_chunk_hdr *bigger = get_chunk_of_len(len);
     memcpy(CHUNK_DATA(bigger), CHUNK_DATA(curr), curr->size);
