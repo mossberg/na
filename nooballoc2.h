@@ -9,9 +9,13 @@
 
 #include "hexdump.h"
 
+#define NDEBUG 1
+#include "debug.h"
+
+
 #define PAGE_SIZE 4096
 #define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
-#define CHUNK_HDR(data) ((void *) (uint8_t *)data - sizeof(struct na_chunk_hdr))
+#define CHUNK_HDR(data) ((void *) ((uint8_t *)data - sizeof(struct na_chunk_hdr)))
 #define NEXT_CHUNK(chunk) ((void *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
 void na_dump(void);
@@ -54,11 +58,12 @@ static struct na_chunk_hdr *get_chunk_of_len(size_t len)
             na_panic("no big enough heap chunks");
         }
 
-        struct na_chunk_hdr *next = CHUNK_DATA(curr) + len;
-        /* printf("curr %p\n", curr); */
-        /* printf("na start %p\n", na_start); */
-        /* printf("next %p\n", next); */
+        struct na_chunk_hdr *next = (struct na_chunk_hdr *) ((uintptr_t) \
+                CHUNK_DATA(curr) + len);
 
+        debug("curr %p", curr);
+        debug("na start %p", na_start);
+        debug("next %p", next);
 
         next->size = curr->size - len - sizeof(*next);
         next->allocated = false;
@@ -92,12 +97,6 @@ void *na_realloc(void *p, size_t len)
     memcpy(CHUNK_DATA(bigger), CHUNK_DATA(curr), curr->size);
     curr->allocated = false;
 
-    /* puts("about to dump"); */
-    /* na_dump(); */
-
-    /* puts("----"); */
-
-
     return CHUNK_DATA(bigger);
 }
 
@@ -107,6 +106,8 @@ void na_free(void *p)
     if (!hdr->allocated)
         na_panic("trying to free unallocated chunk!");
     hdr->allocated = false;
+
+    // forward coalesce
     struct na_chunk_hdr *next = NEXT_CHUNK(hdr);
     if (!next->allocated) {
         hdr->size += sizeof(*next) + next->size;

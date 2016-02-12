@@ -200,8 +200,8 @@ int _realloc(void)
         return ret;
     }
 
-    char *a = na_alloc(8);
-    memset(a, 'A', 8);
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
 
     char *b = na_alloc(8);
     memset(b, 'B', 8);
@@ -212,7 +212,7 @@ int _realloc(void)
     na_dump();
     hexdump(na_start, 0x50);
 
-    na_realloc(a, 64);
+    na_realloc(a, 9);
 
     na_dump();
     hexdump(na_start, 0x100);
@@ -221,6 +221,72 @@ int _realloc(void)
     return 0;
 }
 
+int _realloc2(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
+
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
+
+    char *c = na_alloc(16);
+    memset(c, 'C', 16);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_realloc(a, 11);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+}
+
+// realloc a chunk when the next chunk is empty and the size of both chunks
+// is big enough to fit request should coalesce those. currently we would
+// detect that the current chunk is not big enough, then linear search to find
+// a fresh fitting chunk
+int _realloc3(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
+
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
+
+    char *c = na_alloc(16);
+    memset(c, 'C', 16);
+
+    char *d = na_alloc(16);
+    memset(d, 'D', 16);
+
+    na_free(c);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_realloc(b, 20);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+}
 
 int main(int argc, char **argv)
 {
@@ -228,6 +294,6 @@ int main(int argc, char **argv)
     /* test1(); */
     /* test2(); */
     /* coalesce2(); */
-    _realloc();
+    _realloc3();
     return 0;
 }
