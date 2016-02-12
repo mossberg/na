@@ -15,8 +15,8 @@
 
 #define PAGE_SIZE 4096
 #define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
-#define CHUNK_HDR(data) ((void *) ((uint8_t *)data - sizeof(struct na_chunk_hdr)))
-#define NEXT_CHUNK(chunk) ((void *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
+#define CHUNK_HDR(data) ((struct na_chunk_hdr *) ((uint8_t *)data - sizeof(struct na_chunk_hdr)))
+#define NEXT_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
 void na_dump(void);
 
@@ -51,7 +51,7 @@ static struct na_chunk_hdr *get_chunk_of_len(size_t len)
 {
     struct na_chunk_hdr *curr = na_start;
     while ((curr->allocated || curr->size < len) && !curr->is_last) {
-        curr = NEXT_CHUNK(curr);
+        curr = NEXT_CHUNK_HDR(curr);
     }
     if (curr->is_last) {
         if (curr->size < len) {
@@ -93,6 +93,7 @@ void *na_realloc(void *p, size_t len)
     if (len <= curr->size) {
         return p;
     }
+
     struct na_chunk_hdr *bigger = get_chunk_of_len(len);
     memcpy(CHUNK_DATA(bigger), CHUNK_DATA(curr), curr->size);
     curr->allocated = false;
@@ -108,7 +109,7 @@ void na_free(void *p)
     hdr->allocated = false;
 
     // forward coalesce
-    struct na_chunk_hdr *next = NEXT_CHUNK(hdr);
+    struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
     if (!next->allocated) {
         hdr->size += sizeof(*next) + next->size;
         if (next->is_last) {
@@ -138,7 +139,7 @@ void na_dump(void)
             hexdump((uint8_t *)curr + sizeof(*curr), curr->size);
         }
         heap_size += curr->size + sizeof(*curr);
-        curr = NEXT_CHUNK(curr);
+        curr = NEXT_CHUNK_HDR(curr);
     }
     dump_hdr(curr);
     heap_size += curr->size + sizeof(*curr);
