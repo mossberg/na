@@ -17,6 +17,8 @@
 #define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
 #define CHUNK_HDR(data) ((struct na_chunk_hdr *) ((uint8_t *)data - sizeof(struct na_chunk_hdr)))
 #define NEXT_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
+/* don't call this on the first chunk (chunk->prev_size == -1) */
+#define PREV_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk - sizeof(*chunk) - chunk->prev_size))
 
 void na_dump(void);
 void na_free(void *p);
@@ -24,6 +26,7 @@ void na_free(void *p);
 void *na_start;
 
 struct na_chunk_hdr {
+    ssize_t prev_size;
     size_t size;  
     bool allocated;
     bool is_last;
@@ -41,6 +44,7 @@ int na_init(void)
     if (na_start == MAP_FAILED)
         return -1;
     struct na_chunk_hdr *first = na_start;
+    first->prev_size = -1;
     first->size = PAGE_SIZE - sizeof(*first);
     first->allocated = false;
     first->is_last = true;
@@ -66,6 +70,7 @@ static struct na_chunk_hdr *get_chunk_of_len(size_t len)
         debug("na start %p", na_start);
         debug("next %p", next);
 
+        next->prev_size = len;
         next->size = curr->size - len - sizeof(*next);
         next->allocated = false;
         next->is_last = true;
@@ -90,12 +95,25 @@ void *na_alloc(size_t len)
 static void forward_coalesce(struct na_chunk_hdr *hdr)
 {
     struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
-    if (!next->allocated) {
-        hdr->size += sizeof(*next) + next->size;
-        if (next->is_last) {
-            hdr->is_last = true;
-        }
+    if (next->allocated)
+        return;
+    hdr->size += sizeof(*next) + next->size;
+    if (next->is_last) {
+        hdr->is_last = true;
     }
+}
+
+static void backward_coalesce(struct na_chunk_hdr *hdr)
+{
+    if (hdr->prev_size == -1)
+        return;
+    struct na_chunk_hdr *prev = PREV_CHUNK_HDR(hdr);
+    if (prev->allocated)
+        return;
+    prev->size += sizeof(*hdr) + hdr->size;
+    /* we always keep the next chunk's prev_size updated */
+    struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
+    next->prev_size = prev->size;
 }
 
 void *na_realloc(void *p, size_t len)
@@ -142,6 +160,7 @@ void na_free(void *p)
     hdr->allocated = false;
 
     forward_coalesce(hdr);
+    /* backward_coalesc(hdr); */
 }
 
 
