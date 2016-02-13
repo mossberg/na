@@ -302,13 +302,13 @@ int _realloc5(void)
     char *b = na_alloc(8);
     memset(b, 'B', 8);
 
-    na_dump();
     hexdump(na_start, 0x50);
+    na_dump();
 
     na_realloc(b, 20);
 
-    na_dump();
     hexdump(na_start, 0x100);
+    na_dump();
 
     na_close();
     return 0;

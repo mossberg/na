@@ -32,6 +32,8 @@ struct na_chunk_hdr {
     bool is_last;
 } __attribute__((packed));
 
+static void dump_hdr(struct na_chunk_hdr *hdr);
+
 static void na_panic(const char *msg)
 {
     fprintf(stderr, "*** nooballoc2: %s ***\n", msg);
@@ -133,15 +135,24 @@ void *na_realloc(void *p, size_t len)
         struct na_chunk_hdr *next = NEXT_CHUNK_HDR(curr);
         if (len <= curr->size + sizeof(*next) + next->size) {
             if (next->is_last) {
+                struct na_chunk_hdr *last = next;
                 // todo these names are really bad, but the math should be
                 // right
                 struct na_chunk_hdr *new_last = (struct na_chunk_hdr *) ((uintptr_t) \
                         CHUNK_DATA(curr) + len);
-                size_t wilderness_diff = sizeof(*new_last) + (len - (curr->size + sizeof(*next)));
-                new_last->size = next->size - wilderness_diff;
+                size_t wilderness_diff = sizeof(*new_last) + (len - (curr->size + sizeof(*last)));
+                curr->size = len;
+
+                /* we have to copy the last chunk hdr in case the requested len
+                 * makes new_last overlap with last so we can safely refer
+                 * to both */
+                struct na_chunk_hdr tmp;
+                memcpy(&tmp, last, sizeof(tmp));
+
+                new_last->prev_size = curr->size;
+                new_last->size = tmp.size - wilderness_diff;
                 new_last->allocated = false;
                 new_last->is_last = true;
-                curr->size = len;
             } else {
                 forward_coalesce(curr);
             }
@@ -166,13 +177,14 @@ void na_free(void *p)
     hdr->allocated = false;
 
     forward_coalesce(hdr);
-    /* backward_coalesc(hdr); */
+    backward_coalesce(hdr);
 }
 
 
 static void dump_hdr(struct na_chunk_hdr *hdr)
 {
     printf("> %p\n", hdr);
+    printf("\tprev_size: %zd (0x%zx)\n", hdr->prev_size, hdr->prev_size);
     printf("\tsize: %lu (0x%zx)\n", hdr->size, hdr->size);
     printf("\tallocated: %d\n", hdr->allocated);
     printf("\tis_last: %d\n", hdr->is_last);
