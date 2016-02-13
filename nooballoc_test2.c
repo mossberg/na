@@ -335,12 +335,46 @@ int _realloc4(void)
     return 0;
 }
 
+int back_co(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
+
+    char *b = na_alloc(10);
+    memset(b, 'B', 10);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_free(a);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    puts("her");
+    na_free(b);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+
+}
+
 int main(int argc, char **argv)
 {
 
     /* test1(); */
     /* test2(); */
     /* coalesce2(); */
-    _realloc5();
+    /* _realloc5(); */
+    back_co();
     return 0;
 }

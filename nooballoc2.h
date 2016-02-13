@@ -119,9 +119,14 @@ static void backward_coalesce(struct na_chunk_hdr *hdr)
     if (prev->allocated)
         return;
     prev->size += sizeof(*hdr) + hdr->size;
-    /* we always keep the next chunk's prev_size updated */
-    struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
-    next->prev_size = prev->size;
+    if (hdr->is_last) {
+        /* this might happen if a forward_coalesce causes hdr to become the
+         * last chunk */
+        prev->is_last = true;
+    } else {
+        struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
+        next->prev_size = prev->size;
+    }
 }
 
 void *na_realloc(void *p, size_t len)
