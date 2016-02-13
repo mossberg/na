@@ -134,6 +134,8 @@ void *na_realloc(void *p, size_t len)
 
 void na_free(void *p)
 {
+    if (!p)
+        return;
     struct na_chunk_hdr *hdr = CHUNK_HDR(p);
     if (!hdr->allocated)
         na_panic("trying to free unallocated chunk!");
