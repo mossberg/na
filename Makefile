@@ -1,4 +1,4 @@
-OUT = nooballoc_test nooballoc_test2
+OUT = nooballoc_test nooballoc_test2 linkedlist
 HEADERS = $(wildcard *.h)
 
 all: $(OUT) $(HEADERS)

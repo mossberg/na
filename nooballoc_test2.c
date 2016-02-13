@@ -288,12 +288,59 @@ int _realloc3(void)
     return 0;
 }
 
+int _realloc5(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
+
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_realloc(b, 20);
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+}
+
+int _realloc4(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(10);
+    memset(a, 'A', 10);
+
+    na_realloc(a, 20);
+
+
+    na_dump();
+    hexdump(na_start, 0x100);
+
+    na_close();
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
 
     /* test1(); */
     /* test2(); */
     /* coalesce2(); */
-    _realloc3();
+    _realloc5();
     return 0;
 }

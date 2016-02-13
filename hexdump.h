@@ -15,7 +15,7 @@ void print_ascii(size_t off, size_t len, const unsigned char *hex) {
 }
 
 void hexdump(const void *_hex, const size_t sz) {
-    const unsigned char *hex = (unsigned char *) _hex;
+    const unsigned char *hex = _hex;
     size_t i = 0;
     for (; i < sz; i++) {
         if (i % 2 == 0) {

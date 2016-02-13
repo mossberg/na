@@ -19,6 +19,7 @@
 #define NEXT_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
 
 void na_dump(void);
+void na_free(void *p);
 
 void *na_start;
 
@@ -107,7 +108,19 @@ void *na_realloc(void *p, size_t len)
     } else if (!NEXT_CHUNK_HDR(curr)->allocated) {
         struct na_chunk_hdr *next = NEXT_CHUNK_HDR(curr);
         if (len <= curr->size + sizeof(*next) + next->size) {
-            forward_coalesce(curr);
+            if (next->is_last) {
+                // todo these names are really bad, but the math should be
+                // right
+                struct na_chunk_hdr *new_last = (struct na_chunk_hdr *) ((uintptr_t) \
+                        CHUNK_DATA(curr) + len);
+                size_t wilderness_diff = sizeof(*new_last) + (len - (curr->size + sizeof(*next)));
+                new_last->size = next->size - wilderness_diff;
+                new_last->allocated = false;
+                new_last->is_last = true;
+                curr->size = len;
+            } else {
+                forward_coalesce(curr);
+            }
             return p;
         }
     }
@@ -126,7 +139,6 @@ void na_free(void *p)
         na_panic("trying to free unallocated chunk!");
     hdr->allocated = false;
 
-    // forward coalesce
     forward_coalesce(hdr);
 }
 
@@ -154,6 +166,7 @@ void na_dump(void)
     }
     dump_hdr(curr);
     heap_size += curr->size + sizeof(*curr);
+    debug("heap size %lu\n", heap_size);
     assert(heap_size == PAGE_SIZE && "all heap sizes don't add up!");
 
     puts(" >>> DUMP END <<< ");
