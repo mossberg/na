@@ -97,9 +97,15 @@ static void forward_coalesce(struct na_chunk_hdr *hdr)
     struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
     if (next->allocated)
         return;
-    hdr->size += sizeof(*next) + next->size;
+    size_t diff = sizeof(*next) + next->size;
+    hdr->size += diff;
     if (next->is_last) {
         hdr->is_last = true;
+    } else {
+        /* if we didn't just coalesce the last chunk, we need to update
+         * the new next's prev_size */
+        next = NEXT_CHUNK_HDR(hdr);
+        next->prev_size += diff;
     }
 }
 
