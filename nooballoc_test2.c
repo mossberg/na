@@ -191,6 +191,54 @@ int coalesce2(void)
     na_close();
     return 0;
 }
+int coalesce3(void)
+{
+    int ret;
+    if ((ret = na_init())) {
+        perror(NULL);
+        return ret;
+    }
+
+    char *a = na_alloc(8);
+    memset(a, 'A', 8);
+
+    char *b = na_alloc(8);
+    memset(b, 'B', 8);
+
+    char *c = na_alloc(16);
+    memset(c, 'C', 16);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_free(b);
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    char *d = na_alloc(9);
+    memset(d, 'D', 9);
+
+    char *e = na_alloc(7);
+    memset(e, 'E', 7);
+
+
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_free(e);
+    na_free(d);
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_free(a);
+    na_free(c);
+    na_dump();
+    hexdump(na_start, 0x50);
+
+    na_close();
+    return 0;
+}
 
 int _realloc(void)
 {
@@ -373,8 +421,8 @@ int main(int argc, char **argv)
 
     /* test1(); */
     /* test2(); */
-    /* coalesce2(); */
+    coalesce3();
     /* _realloc5(); */
-    back_co();
+    /* back_co(); */
     return 0;
 }
