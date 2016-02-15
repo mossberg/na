@@ -14,12 +14,12 @@
 
 
 #define PAGE_SIZE 4096
-#define CHUNK_DATA(chunk) ((void *) (((uint8_t *)chunk) + sizeof(*chunk)))
-#define CHUNK_HDR(data) ((struct na_chunk_hdr *) ((uint8_t *)data - sizeof(struct na_chunk_hdr)))
+#define CHUNK_DATA(chunk) ((void *) (((uintptr_t)chunk) + sizeof(*chunk)))
+#define CHUNK_HDR(data) ((struct na_chunk_hdr *) ((uintptr_t)data - sizeof(struct na_chunk_hdr)))
 /* don't call this on the last chunk (chunk->is_last == true) */
-#define NEXT_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk + sizeof(*chunk) + chunk->size))
+#define NEXT_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uintptr_t)chunk + sizeof(*chunk) + chunk->size))
 /* don't call this on the first chunk (chunk->prev_size == -1) */
-#define PREV_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uint8_t *)chunk - sizeof(*chunk) - chunk->prev_size))
+#define PREV_CHUNK_HDR(chunk) ((struct na_chunk_hdr *)((uintptr_t)chunk - sizeof(*chunk) - chunk->prev_size))
 
 void na_dump(void);
 void na_free(void *p);
@@ -28,7 +28,7 @@ void *na_start;
 
 struct na_chunk_hdr {
     ssize_t prev_size;
-    size_t size;  
+    size_t size;
     bool allocated;
     bool is_last;
 } __attribute__((packed));
