@@ -107,6 +107,7 @@ static void forward_coalesce(struct na_chunk_hdr *hdr)
         /* if we didn't just coalesce the last chunk, we need to update
          * the new next's prev_size */
         next = NEXT_CHUNK_HDR(hdr);
+        /* TODO: exploit this later */
         next->prev_size = hdr->size;
     }
 }
@@ -125,6 +126,7 @@ static void backward_coalesce(struct na_chunk_hdr *hdr)
         prev->is_last = true;
     } else {
         struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
+        /* TODO: exploit this later */
         next->prev_size = prev->size;
     }
 }
@@ -147,6 +149,8 @@ void *na_realloc(void *p, size_t len)
                         CHUNK_DATA(curr) + len);
                 size_t wilderness_diff = sizeof(*new_last) + (len - (curr->size + sizeof(*last)));
                 curr->size = len;
+
+                /* TODO: exploit this later */
 
                 /* we have to copy the last chunk hdr in case the requested len
                  * makes new_last overlap with last so we can safely refer
