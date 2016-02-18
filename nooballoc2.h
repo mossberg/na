@@ -107,7 +107,8 @@ static void forward_coalesce(struct na_chunk_hdr *hdr)
         /* if we didn't just coalesce the last chunk, we need to update
          * the new next's prev_size */
         next = NEXT_CHUNK_HDR(hdr);
-        /* TODO: exploit this later */
+        /* to exploit this, the address of your arb write would also have to be
+           basically your payload lol */
         next->prev_size = hdr->size;
     }
 }
@@ -126,7 +127,8 @@ static void backward_coalesce(struct na_chunk_hdr *hdr)
         prev->is_last = true;
     } else {
         struct na_chunk_hdr *next = NEXT_CHUNK_HDR(hdr);
-        /* TODO: exploit this later */
+        /* to exploit this, the address of your arb write would also have to be
+           basically your payload lol */
         next->prev_size = prev->size;
     }
 }
