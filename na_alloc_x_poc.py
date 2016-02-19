@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# applies to at least git has 2c80411
+
 from pwn import *
 import sys
 

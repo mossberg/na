@@ -1,4 +1,4 @@
-/* mark's dumb constrainted heap write
+/* mark's dumb constrainted heap write, applies to at least git hash 2c80411
  * constraints:
  *  - write to higher heap memory than the chunk you overflow
  *  - payload you get to write is the argument to na_alloc and like 12 other
